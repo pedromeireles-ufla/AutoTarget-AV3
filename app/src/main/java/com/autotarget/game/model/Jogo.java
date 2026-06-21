@@ -4,6 +4,7 @@ import com.autotarget.game.exception.JogoException;
 import com.autotarget.game.util.EvidenceLogger;
 import java.util.ArrayList;
 import java.util.List;
+import com.autotarget.game.util.FirebaseRepository;
 import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -53,6 +54,12 @@ public class Jogo {
     private int tempoRestante = 60;
     private final Random random = new Random();
 
+    // Sistema Ciberfísico (AV3)
+    private float temperaturaAtual = 30.0f;
+    private float limiarTemperatura = 40.0f;
+    private volatile float fatorFeedback = 1.0f;
+    private final FirebaseRepository firebaseRepository = new FirebaseRepository();
+
     /**
      * Contrato usado pela tela para receber atualizações de tempo, placar, energia e fim de partida.
      */
@@ -95,6 +102,7 @@ public class Jogo {
         iniciarThreadEnergia();
         iniciarThreadReconciliacao();
         iniciarThreadMovimentoCanhoes();
+        iniciarThreadTelemetria();
 
         // Iniciar com 1 canhão de cada lado para cobertura inicial
         try {
@@ -319,6 +327,50 @@ public class Jogo {
         }
 
         return (n - LIMITE_PENALIDADE) * 20;
+    }
+
+    /**
+     * Implementa a telemetria e o controle por feedback (Requisito 6.3.2 d).
+     * Registra a temperatura a cada 10 segundos e ajusta a taxa de disparo.
+     */
+    private void iniciarThreadTelemetria() {
+        gameExecutor.execute(() -> {
+            while (emAndamento) {
+                try {
+                    // Simulação de sensor de temperatura (valor aleatório entre 30 e 45 graus)
+                    temperaturaAtual = 30.0f + random.nextFloat() * 15.0f;
+                    
+                    String estado = temperaturaAtual > limiarTemperatura ? "SUPERAQUECIDO" : "NORMAL";
+                    
+                    // Controle por Feedback: Reduz a taxa de disparo se superaquecer
+                    if (temperaturaAtual > limiarTemperatura) {
+                        // Aumenta o intervalo de disparo (fator > 1.0)
+                        fatorFeedback = 1.5f + (temperaturaAtual - limiarTemperatura) * 0.1f;
+                    } else {
+                        fatorFeedback = 1.0f;
+                    }
+
+                    // Registro no Firebase
+                    firebaseRepository.registrarTelemetria(new Telemetria(temperaturaAtual, estado));
+                    
+                    EvidenceLogger.registrarEvento("TELEMETRIA", 
+                        String.format("Temp: %.1f°C | Estado: %s | Fator Feedback: %.2f", 
+                        temperaturaAtual, estado, fatorFeedback));
+
+                    Thread.sleep(10000); // A cada 10 segundos
+                } catch (InterruptedException e) {
+                    break;
+                }
+            }
+        });
+    }
+
+    public float getFatorFeedback() {
+        return fatorFeedback;
+    }
+
+    public float getTemperaturaAtual() {
+        return temperaturaAtual;
     }
 
     public OptimizationTask getOptimizationEsquerda() { return optimizationEsquerda; }

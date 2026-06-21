@@ -48,9 +48,9 @@ public class Canhao extends Thread {
                 long intervaloBase = 1000;
                 int penalidadeExcesso = jogo.getPenalidade(isEsquerda);
 
-                // Penalidade por excesso de canhões:
-                // intervalo = intervaloBase * (1 + (n - L) * 0.2)
-                long intervaloFinal = (long) (intervaloBase * (1 + (penalidadeExcesso / 100.0)));
+                // Penalidade por excesso de canhões e Feedback de Temperatura (AV3)
+                // intervalo = intervaloBase * (1 + penalidade) * fatorFeedback
+                long intervaloFinal = (long) (intervaloBase * (1 + (penalidadeExcesso / 100.0)) * jogo.getFatorFeedback());
 
                 Thread.sleep(intervaloFinal);
             } catch (InterruptedException e) {

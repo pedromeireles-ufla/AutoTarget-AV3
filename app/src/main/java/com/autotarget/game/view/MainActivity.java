@@ -1,6 +1,7 @@
 package com.autotarget.game.view;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -14,7 +15,9 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.autotarget.game.R;
 import com.autotarget.game.model.Jogo;
+import com.autotarget.game.model.Partida;
 import com.autotarget.game.util.EvidenceLogger;
+import com.autotarget.game.util.FirebaseRepository;
 import com.autotarget.game.util.SchedulingAnalysis;
 
 import java.io.File;
@@ -32,6 +35,7 @@ public class MainActivity extends AppCompatActivity implements Jogo.JogoCallback
     // Referências aos componentes de interface e ao modelo da partida atual.
     private GameView gameView;
     private Jogo jogo;
+    private FirebaseRepository firebaseRepository = new FirebaseRepository();
 
     private TextView tvAbatesEsq, tvAbatesDir;
     private TextView tvEnergiaEsq, tvEnergiaDir;
@@ -73,6 +77,10 @@ public class MainActivity extends AppCompatActivity implements Jogo.JogoCallback
         tvAbatesFinalEsq = findViewById(R.id.tvAbatesFinalEsq);
         tvAbatesFinalDir = findViewById(R.id.tvAbatesFinalDir);
         btnReiniciarJogo = findViewById(R.id.btnReiniciarJogo);
+        Button btnVerRanking = findViewById(R.id.btnVerRanking);
+        btnVerRanking.setOnClickListener(v ->
+                startActivity(new Intent(this, RankingActivity.class))
+        );
 
         btnAcaoPrincipal = findViewById(R.id.btnAcaoPrincipal);
 
@@ -196,6 +204,7 @@ public class MainActivity extends AppCompatActivity implements Jogo.JogoCallback
     @Override
     public void onJogoFinalizado(String vencedor, int abatesEsq, int abatesDir) {
         salvarRelatorioEvidencias("fim da partida");
+        salvarPartidaNoFirebase(abatesEsq, abatesDir);
 
         runOnUiThread(() -> {
             btnAcaoPrincipal.setText("Iniciar Jogo");
@@ -216,6 +225,40 @@ public class MainActivity extends AppCompatActivity implements Jogo.JogoCallback
                 Log.e(SCHED_TAG, "Relatório de evidências salvo após " + origem + ": " + arquivo.getAbsolutePath());
             } catch (Exception e) {
                 Log.e(SCHED_TAG, "Erro ao salvar relatório de evidências após " + origem, e);
+            }
+        });
+    }
+
+    private void salvarPartidaNoFirebase(int abatesEsq, int abatesDir) {
+        String userId = firebaseRepository.getCurrentUserId();
+        if (userId == null) return;
+
+        // Usa o nickname salvo no perfil; se não tiver, usa fallback
+        com.google.firebase.auth.FirebaseUser user =
+                com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
+        String nickname = (user != null && user.getDisplayName() != null
+                && !user.getDisplayName().isEmpty())
+                ? user.getDisplayName()
+                : "Jogador_" + userId.substring(0, 5);
+
+        Partida partida = new Partida(
+                userId,
+                nickname,
+                "Total: " + (abatesEsq + abatesDir),
+                abatesEsq + abatesDir,
+                jogo.getCanhoesEsquerda().size() + jogo.getCanhoesDireita().size()
+        );
+
+        firebaseRepository.salvarPartida(partida, new FirebaseRepository.RepositoryCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                runOnUiThread(() -> Toast.makeText(MainActivity.this,
+                        "Partida salva no ranking!", Toast.LENGTH_SHORT).show());
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Log.e(TAG, "Erro ao salvar no Firebase", e);
             }
         });
     }
