@@ -38,18 +38,6 @@
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"/>
 
-        <Button
-            android:id="@+id/btnEditarNickname"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Nick"
-            android:textSize="14sp"
-            android:minHeight="0dp"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="4dp"
-            android:layout_alignParentStart="true"
-            android:layout_centerVertical="true"/>
-
     </RelativeLayout>
 
     <!-- Legenda visual dos tipos de alvo exibidos no campo. -->

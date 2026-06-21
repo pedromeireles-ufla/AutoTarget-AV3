@@ -37,7 +37,7 @@ public class RankingActivity extends AppCompatActivity {
         tvCarregando = findViewById(R.id.tvCarregando);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        firebaseRepository = FirebaseRepository.getInstance();
+        firebaseRepository = new FirebaseRepository();
 
         firebaseRepository.buscarRanking(new FirebaseRepository.RepositoryCallback<List<Partida>>() {
             @Override

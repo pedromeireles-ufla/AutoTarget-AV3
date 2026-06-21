@@ -36,7 +36,7 @@ public class MainActivity extends AppCompatActivity implements Jogo.JogoCallback
     // Referências aos componentes de interface e ao modelo da partida atual.
     private GameView gameView;
     private Jogo jogo;
-    private FirebaseRepository firebaseRepository = FirebaseRepository.getInstance();
+    private FirebaseRepository firebaseRepository = new FirebaseRepository();
 
     private TextView tvAbatesEsq, tvAbatesDir;
     private TextView tvEnergiaEsq, tvEnergiaDir;
@@ -74,8 +74,6 @@ public class MainActivity extends AppCompatActivity implements Jogo.JogoCallback
         tvCronometro = findViewById(R.id.tvCronometro);
         Button btnLogoff = findViewById(R.id.btnLogoff);
         btnLogoff.setOnClickListener(v -> fazerLogoff());
-        Button btnEditarNickname = findViewById(R.id.btnEditarNickname);
-        btnEditarNickname.setOnClickListener(v -> mostrarDialogoTrocarNickname());
 
         layoutPlacarFinal = findViewById(R.id.layoutPlacarFinal);
         tvVencedor = findViewById(R.id.tvVencedor);
@@ -207,9 +205,9 @@ public class MainActivity extends AppCompatActivity implements Jogo.JogoCallback
 
     /** Exibe o painel final com vencedor, placar consolidado e renderização interrompida. */
     @Override
-    public void onJogoFinalizado(String vencedor, int abatesEsq, int abatesDir, int totalCanhoes) {
+    public void onJogoFinalizado(String vencedor, int abatesEsq, int abatesDir) {
         salvarRelatorioEvidencias("fim da partida");
-        salvarPartidaNoFirebase(abatesEsq, abatesDir, totalCanhoes);
+        salvarPartidaNoFirebase(abatesEsq, abatesDir);
 
         runOnUiThread(() -> {
             btnAcaoPrincipal.setText("Iniciar Jogo");
@@ -234,10 +232,11 @@ public class MainActivity extends AppCompatActivity implements Jogo.JogoCallback
         });
     }
 
-    private void salvarPartidaNoFirebase(int abatesEsq, int abatesDir, int totalCanhoes) {
+    private void salvarPartidaNoFirebase(int abatesEsq, int abatesDir) {
         String userId = firebaseRepository.getCurrentUserId();
         if (userId == null) return;
 
+        // Usa o nickname salvo no perfil; se não tiver, usa fallback
         com.google.firebase.auth.FirebaseUser user =
                 com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
         String nickname = (user != null && user.getDisplayName() != null
@@ -250,7 +249,7 @@ public class MainActivity extends AppCompatActivity implements Jogo.JogoCallback
                 nickname,
                 "Total: " + (abatesEsq + abatesDir),
                 abatesEsq + abatesDir,
-                totalCanhoes
+                jogo.getCanhoesEsquerda().size() + jogo.getCanhoesDireita().size()
         );
 
         firebaseRepository.salvarPartida(partida, new FirebaseRepository.RepositoryCallback<Void>() {
@@ -289,41 +288,5 @@ public class MainActivity extends AppCompatActivity implements Jogo.JogoCallback
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
-    }
-    private void mostrarDialogoTrocarNickname() {
-        com.google.firebase.auth.FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) return;
-
-        final android.widget.EditText input = new android.widget.EditText(this);
-        input.setHint("Novo nickname");
-        if (user.getDisplayName() != null) {
-            input.setText(user.getDisplayName());
-        }
-
-        new android.app.AlertDialog.Builder(this)
-                .setTitle("Trocar nickname")
-                .setView(input)
-                .setPositiveButton("Salvar", (dialog, which) -> {
-                    String novoNickname = input.getText().toString().trim();
-                    if (novoNickname.isEmpty()) {
-                        Toast.makeText(this, "Nickname não pode ser vazio", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-
-                    com.google.firebase.auth.UserProfileChangeRequest profileUpdate =
-                            new com.google.firebase.auth.UserProfileChangeRequest.Builder()
-                                    .setDisplayName(novoNickname)
-                                    .build();
-
-                    user.updateProfile(profileUpdate).addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            Toast.makeText(this, "Nickname atualizado!", Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(this, "Erro ao atualizar nickname", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                })
-                .setNegativeButton("Cancelar", null)
-                .show();
     }
 }

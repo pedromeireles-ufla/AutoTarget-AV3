@@ -15,7 +15,6 @@ import java.util.concurrent.Executors;
  * Atende ao requisito 6.3.2 c) da AV3.
  */
 public class FirebaseRepository {
-    private static FirebaseRepository instance;
     private final FirebaseFirestore db;
     private final FirebaseAuth auth;
     private final ExecutorService executor;
@@ -25,56 +24,77 @@ public class FirebaseRepository {
         void onError(Exception e);
     }
 
-    private FirebaseRepository() {
+    public FirebaseRepository() {
         this.db = FirebaseFirestore.getInstance();
         this.auth = FirebaseAuth.getInstance();
         this.executor = Executors.newSingleThreadExecutor();
     }
 
-    /** Garante uma única instância compartilhada (Singleton), evitando múltiplos executors concorrentes. */
-    public static synchronized FirebaseRepository getInstance() {
-        if (instance == null) {
-            instance = new FirebaseRepository();
-        }
-        return instance;
-    }
-
-    /** Salva uma partida criptografada no Firestore, de forma sincronizada para evitar conflitos. */
-    public synchronized void salvarPartida(Partida partida, RepositoryCallback<Void> callback) {
+    /** Salva uma partida criptografada no Firestore. */
+    public void salvarPartida(Partida partida, RepositoryCallback<Void> callback) {
         executor.execute(() -> {
-            try {
-                org.json.JSONObject dadosSensiveis = new org.json.JSONObject();
-                dadosSensiveis.put("nomeJogador", partida.getNomeJogador());
-                dadosSensiveis.put("pontuacaoFinal", partida.getPontuacaoFinal());
+            // Criptografar campos sensíveis antes de salvar (Requisito 6.3.2 b)
+            partida.setNomeJogador(Cryptography.encrypt(partida.getNomeJogador()));
+            partida.setPontuacaoFinal(Cryptography.encrypt(partida.getPontuacaoFinal()));
 
-                String jsonCriptografado = Cryptography.encrypt(dadosSensiveis.toString());
-                partida.setDadosCriptografados(jsonCriptografado);
-                partida.setNomeJogador(null);
-                partida.setPontuacaoFinal(null);
-
-                db.collection("partidas")
-                        .add(partida)
-                        .addOnSuccessListener(documentReference -> {
-                            EvidenceLogger.registrarEvento("FIREBASE", "Partida salva com sucesso");
-                            if (callback != null) callback.onSuccess(null);
-                        })
-                        .addOnFailureListener(e -> {
-                            EvidenceLogger.registrarEvento("FIREBASE", "Erro ao salvar partida: " + e.getMessage());
-                            if (callback != null) callback.onError(e);
-                        });
-            } catch (Exception e) {
-                if (callback != null) callback.onError(e);
-            }
+            db.collection("partidas")
+                .add(partida)
+                .addOnSuccessListener(documentReference -> {
+                    EvidenceLogger.registrarEvento("FIREBASE", "Partida salva com sucesso");
+                    if (callback != null) callback.onSuccess(null);
+                })
+                .addOnFailureListener(e -> {
+                    EvidenceLogger.registrarEvento("FIREBASE", "Erro ao salvar partida: " + e.getMessage());
+                    if (callback != null) callback.onError(e);
+                });
         });
     }
 
-    /** Busca o ranking de forma sincronizada. */
-    public synchronized void buscarRanking(RepositoryCallback<List<Partida>> callback) {
-        // ... mantém a lógica atual, só adiciona "synchronized" na assinatura
+    /** Salva dados de telemetria no Firestore. */
+    public void registrarTelemetria(Telemetria telemetria) {
+        executor.execute(() -> {
+            db.collection("telemetria")
+                .add(telemetria)
+                .addOnFailureListener(e -> 
+                    EvidenceLogger.registrarEvento("FIREBASE", "Erro ao registrar telemetria: " + e.getMessage())
+                );
+        });
     }
 
-    public synchronized void registrarTelemetria(Telemetria telemetria) {
-        // ... mantém a lógica atual, só adiciona "synchronized" na assinatura
+    /** Busca o ranking das melhores pontuações. */
+    public void buscarRanking(RepositoryCallback<List<Partida>> callback) {
+        executor.execute(() -> {
+            db.collection("partidas")
+                    .orderBy("alvosAbatidos", Query.Direction.DESCENDING)
+                    .limit(100)
+                    .get()
+                    .addOnSuccessListener(queryDocumentSnapshots -> {
+                        List<Partida> todas = queryDocumentSnapshots.toObjects(Partida.class);
+
+                        // Descriptografa todos os registros
+                        for (Partida p : todas) {
+                            p.setNomeJogador(Cryptography.decrypt(p.getNomeJogador()));
+                            p.setPontuacaoFinal(Cryptography.decrypt(p.getPontuacaoFinal()));
+                        }
+
+                        // Mantém apenas a melhor partida por jogador (sem repetir nome no ranking)
+                        java.util.Map<String, Partida> melhoresPorJogador = new java.util.LinkedHashMap<>();
+                        for (Partida p : todas) {
+                            if (!melhoresPorJogador.containsKey(p.getUserId())) {
+                                melhoresPorJogador.put(p.getUserId(), p);
+                            }
+                        }
+
+                        // Limita a 5 jogadores únicos
+                        List<Partida> top5 = new java.util.ArrayList<>(melhoresPorJogador.values());
+                        if (top5.size() > 5) top5 = top5.subList(0, 5);
+
+                        if (callback != null) callback.onSuccess(top5);
+                    })
+                    .addOnFailureListener(e -> {
+                        if (callback != null) callback.onError(e);
+                    });
+        });
     }
 
     public String getCurrentUserId() {

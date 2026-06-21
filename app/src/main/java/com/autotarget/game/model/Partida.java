@@ -13,13 +13,10 @@ public class Partida {
     private String pontuacaoFinal; // Será criptografado
     private int alvosAbatidos;
     private int canhoesUtilizados;
-    private String dadosCriptografados; // JSON criptografado com nome e pontuação
     
     @ServerTimestamp
     private Date timestamp;
 
-    public String getDadosCriptografados() { return dadosCriptografados; }
-    public void setDadosCriptografados(String dadosCriptografados) { this.dadosCriptografados = dadosCriptografados; }
     public Partida() {
         // Construtor vazio necessário para o Firestore
     }

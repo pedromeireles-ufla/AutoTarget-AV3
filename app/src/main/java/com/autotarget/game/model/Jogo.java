@@ -58,7 +58,7 @@ public class Jogo {
     private float temperaturaAtual = 30.0f;
     private float limiarTemperatura = 40.0f;
     private volatile float fatorFeedback = 1.0f;
-    private FirebaseRepository firebaseRepository = FirebaseRepository.getInstance();
+    private final FirebaseRepository firebaseRepository = new FirebaseRepository();
 
     /**
      * Contrato usado pela tela para receber atualizações de tempo, placar, energia e fim de partida.
@@ -67,7 +67,7 @@ public class Jogo {
         void onTempoAtualizado(int tempo);
         void onPlacarAtualizado(int esq, int dir);
         void onEnergiaAtualizada(float esq, float dir);
-        void onJogoFinalizado(String vencedor, int abatesEsq, int abatesDir, int totalCanhoes);
+        void onJogoFinalizado(String vencedor, int abatesEsq, int abatesDir);
     }
 
     private JogoCallback callback;
@@ -437,14 +437,11 @@ public class Jogo {
     public void finalizarJogo() {
         if (!emAndamento) return;
         this.emAndamento = false;
-
+        
         String vencedor;
         if (abatesEsquerda > abatesDireita) vencedor = "VENCEDOR: SISTEMA A";
         else if (abatesDireita > abatesEsquerda) vencedor = "VENCEDOR: SISTEMA B";
         else vencedor = "EMPATE!";
-
-        // Captura a contagem ANTES de limpar as listas
-        int totalCanhoes = canhoesEsquerda.size() + canhoesDireita.size();
 
         EvidenceLogger.registrarEvento(
                 "PLACAR",
@@ -453,7 +450,7 @@ public class Jogo {
 
         gameExecutor.execute(() -> {
             limparTudo();
-            if (callback != null) callback.onJogoFinalizado(vencedor, abatesEsquerda, abatesDireita, totalCanhoes);
+            if (callback != null) callback.onJogoFinalizado(vencedor, abatesEsquerda, abatesDireita);
         });
     }
 }
