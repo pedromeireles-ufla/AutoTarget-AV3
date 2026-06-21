@@ -3222,7 +3222,9 @@ id browser_actions_menu_item_text
 id browser_actions_menu_items
 id browser_actions_menu_view
 id btnAcaoPrincipal
+id btnEditarNickname
 id btnLogin
+id btnLogoff
 id btnRegister
 id btnReiniciarJogo
 id btnVerRanking
