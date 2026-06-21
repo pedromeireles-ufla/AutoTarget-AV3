@@ -2994,6 +2994,7 @@ drawable abc_textfield_search_material
 drawable abc_vector_test
 drawable avd_hide_password
 drawable avd_show_password
+drawable bg_avatar
 drawable bg_posicao
 drawable btn_checkbox_checked_mtrl
 drawable btn_checkbox_checked_to_unchecked_mtrl_animation
@@ -3619,6 +3620,7 @@ id tvAbatesEsq
 id tvAbatesFinalDir
 id tvAbatesFinalEsq
 id tvAlvos
+id tvAvatar
 id tvCarregando
 id tvCronometro
 id tvData

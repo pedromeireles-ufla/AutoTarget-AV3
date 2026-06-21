@@ -54,11 +54,25 @@ public class MainActivity extends AppCompatActivity implements Jogo.JogoCallback
     private final ExecutorService diagnosticExecutor = Executors.newSingleThreadExecutor();
     private volatile boolean analiseEscalonabilidadeExecutada = false;
 
+    // Evita que onResume tente redirecionar para o login durante um logoff já em andamento,
+    // o que duplicaria a navegação (fazerLogoff já está saindo da tela).
+    private volatile boolean saindoIntencionalmente = false;
+
     /** Configura a interface, associa botões e inicia uma nova partida ao abrir o app. */
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Tratamento de sessão: garante que só chega aqui um usuário autenticado.
+        // Se a sessão tiver expirado ou o app for aberto sem login (ex: deep link, restauração
+        // de estado), redireciona para o login em vez de deixar a tela quebrar mais adiante.
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            Log.e(SCHED_TAG, "onCreate: nenhum usuário autenticado. Redirecionando para LoginActivity.");
+            irParaLoginPorSessaoInvalida();
+            return;
+        }
+
         setContentView(R.layout.activity_main);
 
         // Log de diagnóstico para confirmar que a Activity iniciou e que o filtro do Logcat está correto.
@@ -205,11 +219,29 @@ public class MainActivity extends AppCompatActivity implements Jogo.JogoCallback
         });
     }
 
+    /**
+     * Recebe cada nova leitura de temperatura do sistema ciberfísico.
+     * O histórico completo é lido diretamente do Jogo ao final da partida
+     * para montar o gráfico, então aqui não é necessário fazer nada além
+     * de registrar — o método existe para cumprir o contrato da interface
+     * e pode ser usado no futuro para exibir a temperatura em tempo real.
+     */
+    @Override
+    public void onTelemetriaAtualizada(float temperatura, float limiar, float fatorFeedback) {
+        // Intencionalmente sem atualização de UI aqui: o gráfico é populado
+        // de uma vez ao final da partida, em onJogoFinalizado.
+    }
+
     /** Exibe o painel final com vencedor, placar consolidado e renderização interrompida. */
     @Override
     public void onJogoFinalizado(String vencedor, int abatesEsq, int abatesDir, int totalCanhoes) {
         salvarRelatorioEvidencias("fim da partida");
         salvarPartidaNoFirebase(abatesEsq, abatesDir, totalCanhoes);
+
+        // Captura o histórico de temperatura ANTES de qualquer limpeza de estado do Jogo.
+        java.util.List<Float> historico = jogo.getHistoricoTemperatura();
+        float limiar = jogo.getLimiarTemperatura();
+        gerarGraficoTemperaturaEmArquivo(historico, limiar);
 
         runOnUiThread(() -> {
             btnAcaoPrincipal.setText("Iniciar Jogo");
@@ -219,6 +251,24 @@ public class MainActivity extends AppCompatActivity implements Jogo.JogoCallback
             layoutPlacarFinal.setVisibility(View.VISIBLE);
             tvCronometro.setVisibility(View.GONE);
             gameView.pararRenderizacao();
+        });
+    }
+
+    /**
+     * Gera, em segundo plano, o gráfico SVG de temperatura x tempo e o relatório de
+     * discussão de estabilidade da partida, salvos em arquivo (mesmo padrão usado pela
+     * análise de escalonabilidade). Nada é exibido na tela de fim de jogo.
+     */
+    private void gerarGraficoTemperaturaEmArquivo(java.util.List<Float> historico, float limiar) {
+        diagnosticExecutor.execute(() -> {
+            try {
+                com.autotarget.game.util.TelemetriaChartWriter.Resultado resultado =
+                        com.autotarget.game.util.TelemetriaChartWriter.gerarArquivos(this, historico, limiar);
+                Log.e(SCHED_TAG, "Gráfico de temperatura salvo em: " + resultado.svgFile.getAbsolutePath());
+                Log.e(SCHED_TAG, "Discussão de estabilidade salva em: " + resultado.reportFile.getAbsolutePath());
+            } catch (Exception e) {
+                Log.e(SCHED_TAG, "Erro ao gerar gráfico de temperatura", e);
+            }
         });
     }
 
@@ -263,8 +313,32 @@ public class MainActivity extends AppCompatActivity implements Jogo.JogoCallback
             @Override
             public void onError(Exception e) {
                 Log.e(TAG, "Erro ao salvar no Firebase", e);
+
+                // Tratamento de sessão: se o erro indicar que a sessão não é mais válida
+                // (token expirado, permissão negada, usuário deslogado em outro dispositivo),
+                // avisa o jogador e leva de volta ao login em vez de deixar a partida se perder
+                // silenciosamente sem nenhuma explicação.
+                if (isErroDeSessao(e)) {
+                    runOnUiThread(() -> irParaLoginPorSessaoInvalida());
+                } else {
+                    runOnUiThread(() -> Toast.makeText(MainActivity.this,
+                            "Não foi possível salvar a partida. Verifique sua conexão.",
+                            Toast.LENGTH_LONG).show());
+                }
             }
         });
+    }
+
+    /** Verifica se uma exceção do Firebase indica problema de sessão/autenticação. */
+    private boolean isErroDeSessao(Exception e) {
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) return true;
+        if (e == null || e.getMessage() == null) return false;
+        String msg = e.getMessage().toUpperCase();
+        return msg.contains("PERMISSION_DENIED")
+                || msg.contains("UNAUTHENTICATED")
+                || msg.contains("INVALID_CREDENTIAL")
+                || msg.contains("USER_TOKEN_EXPIRED")
+                || msg.contains("USER_DISABLED");
     }
 
     /** Libera threads e recursos em segundo plano quando a Activity é destruída. */
@@ -275,7 +349,33 @@ public class MainActivity extends AppCompatActivity implements Jogo.JogoCallback
         Log.e(SCHED_TAG, "MainActivity destruída. Executor de diagnóstico encerrado.");
     }
 
+    /**
+     * Tratamento de sessão: a cada vez que a tela volta ao primeiro plano,
+     * confirma que o usuário ainda está autenticado. Cobre o caso de o token
+     * expirar ou a conta ser removida/desconectada enquanto o app estava em background.
+     */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (!saindoIntencionalmente && FirebaseAuth.getInstance().getCurrentUser() == null) {
+            Log.e(SCHED_TAG, "onResume: sessão ausente/expirada. Redirecionando para LoginActivity.");
+            irParaLoginPorSessaoInvalida();
+        }
+    }
+
+    /** Encerra a sessão atual (se houver) e envia o usuário de volta para a tela de login. */
+    private void irParaLoginPorSessaoInvalida() {
+        saindoIntencionalmente = true;
+        Toast.makeText(this, "Sessão expirada. Faça login novamente.", Toast.LENGTH_LONG).show();
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+    }
+
     private void fazerLogoff() {
+        saindoIntencionalmente = true;
+
         // Para o jogo se estiver rodando
         if (jogo != null && jogo.isEmAndamento()) {
             jogo.alternarPausa();

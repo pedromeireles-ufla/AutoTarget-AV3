@@ -60,6 +60,10 @@ public class Jogo {
     private volatile float fatorFeedback = 1.0f;
     private FirebaseRepository firebaseRepository = FirebaseRepository.getInstance();
 
+    // Histórico de temperatura da partida atual, usado para montar o gráfico de telemetria
+    // exibido ao final do jogo (Critério adicional: análise/discussão de estabilidade e limiar).
+    private final List<Float> historicoTemperatura = new CopyOnWriteArrayList<>();
+
     /**
      * Contrato usado pela tela para receber atualizações de tempo, placar, energia e fim de partida.
      */
@@ -68,6 +72,8 @@ public class Jogo {
         void onPlacarAtualizado(int esq, int dir);
         void onEnergiaAtualizada(float esq, float dir);
         void onJogoFinalizado(String vencedor, int abatesEsq, int abatesDir, int totalCanhoes);
+        /** Notifica a tela a cada nova leitura de temperatura, para atualizar o gráfico em tempo real. */
+        void onTelemetriaAtualizada(float temperatura, float limiar, float fatorFeedback);
     }
 
     private JogoCallback callback;
@@ -91,6 +97,7 @@ public class Jogo {
         this.energiaEsquerda = 100f;
         this.energiaDireita = 100f;
         this.tempoRestante = 60;
+        historicoTemperatura.clear();
 
         EvidenceLogger.reiniciar();
         EvidenceLogger.registrarEvento("RELATÓRIO", "Dimensões da arena: largura=" + largura + " altura=" + altura);
@@ -332,6 +339,8 @@ public class Jogo {
     /**
      * Implementa a telemetria e o controle por feedback (Requisito 6.3.2 d).
      * Registra a temperatura a cada 10 segundos e ajusta a taxa de disparo.
+     * Também mantém um histórico em memória e notifica a tela, para permitir
+     * a montagem de um gráfico de temperatura x tempo (Critério adicional).
      */
     private void iniciarThreadTelemetria() {
         gameExecutor.execute(() -> {
@@ -350,6 +359,9 @@ public class Jogo {
                         fatorFeedback = 1.0f;
                     }
 
+                    // Mantém o histórico da partida atual para o gráfico exibido ao final.
+                    historicoTemperatura.add(temperaturaAtual);
+
                     // Registro no Firebase
                     firebaseRepository.registrarTelemetria(new Telemetria(temperaturaAtual, estado));
                     
@@ -357,12 +369,25 @@ public class Jogo {
                         String.format("Temp: %.1f°C | Estado: %s | Fator Feedback: %.2f", 
                         temperaturaAtual, estado, fatorFeedback));
 
+                    if (callback != null) {
+                        callback.onTelemetriaAtualizada(temperaturaAtual, limiarTemperatura, fatorFeedback);
+                    }
+
                     Thread.sleep(10000); // A cada 10 segundos
                 } catch (InterruptedException e) {
                     break;
                 }
             }
         });
+    }
+
+    /** Retorna uma cópia do histórico de temperatura coletado durante a partida atual. */
+    public List<Float> getHistoricoTemperatura() {
+        return new ArrayList<>(historicoTemperatura);
+    }
+
+    public float getLimiarTemperatura() {
+        return limiarTemperatura;
     }
 
     public float getFatorFeedback() {
