@@ -156,7 +156,7 @@ public class RankingActivity extends AppCompatActivity {
 
             holder.tvNome.setText(nome);
             holder.tvData.setText(p.getTimestamp() != null ? sdf.format(p.getTimestamp()) : "");
-            holder.tvAlvos.setText(p.getAlvosAbatidos() + " pts");
+            holder.tvAlvos.setText(p.getAlvosAbatidos() + " abates");
         }
 
         @Override
