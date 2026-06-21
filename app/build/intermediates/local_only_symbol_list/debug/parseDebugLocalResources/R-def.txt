@@ -8,6 +8,7 @@ color white
 drawable bg_posicao
 drawable ic_arrow_back
 id btnAcaoPrincipal
+id btnEditarNickname
 id btnLogin
 id btnLogoff
 id btnRegister

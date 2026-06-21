@@ -3221,6 +3221,7 @@ int id browser_actions_menu_item_text 0x7f080066
 int id browser_actions_menu_items 0x7f080067
 int id browser_actions_menu_view 0x7f080068
 int id btnAcaoPrincipal 0x7f080069
+int id btnEditarNickname 0x7f080216
 int id btnLogin 0x7f08006a
 int id btnLogoff 0x7f08006b
 int id btnRegister 0x7f08006c
