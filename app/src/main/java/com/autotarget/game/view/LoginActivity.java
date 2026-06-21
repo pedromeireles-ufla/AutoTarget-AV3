@@ -2,7 +2,6 @@ package com.autotarget.game.view;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -12,6 +11,12 @@ import com.autotarget.game.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.UserProfileChangeRequest;
 
+/**
+ * Tela única que alterna entre login e cadastro de conta (Firebase Authentication).
+ * O botão "Criar Conta" alterna a UI para o modo de registro, exibindo o campo de
+ * nickname e trocando o comportamento do botão principal, sem precisar de uma
+ * segunda Activity dedicada ao cadastro.
+ */
 public class LoginActivity extends AppCompatActivity {
     private EditText etEmail, etPassword, etNickname;
     private Button btnLogin, btnRegister;
@@ -59,6 +64,7 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+    /** Autentica o usuário com e-mail e senha via Firebase Authentication. */
     private void login() {
         String email    = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
@@ -81,6 +87,7 @@ public class LoginActivity extends AppCompatActivity {
                 });
     }
 
+    /** Cria a conta no Firebase Authentication e salva o nickname escolhido no perfil do usuário. */
     private void register() {
         String email    = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();

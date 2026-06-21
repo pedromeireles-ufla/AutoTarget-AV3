@@ -24,8 +24,8 @@ public class Jogo {
     private final List<Canhao> canhoesDireita = new CopyOnWriteArrayList<>();
     private final List<Projetil> projeteis = new CopyOnWriteArrayList<>();
 
-    // Pool de threads: spawn, cronometro, energia, otimizacao, reconciliacao, movimento de canhoes + margem
-    // Pool central para executar threads de alvos, canhões e rotinas periódicas do jogo.
+    // Pool central para executar threads de alvos, canhões e rotinas periódicas do jogo
+    // (spawn, cronômetro, energia, otimização, reconciliação, movimento de canhões, telemetria + margem).
     private final ExecutorService gameExecutor = Executors.newFixedThreadPool(12);
     
     // Semáforos protegem trechos críticos quando listas compartilhadas são percorridas ou alteradas.
@@ -87,7 +87,6 @@ public class Jogo {
         this.optimizationDireita = new OptimizationTask(this, false);
     }
 
-    /** Inicia a partida, cria entidades iniciais e agenda tarefas periódicas. */
     /** Inicia uma nova partida, cria defesas iniciais e aciona as rotinas periódicas. */
     public void iniciar() {
         this.emAndamento = true;
@@ -314,8 +313,6 @@ public class Jogo {
     public boolean isEmAndamento() { return emAndamento; }
     public int getLargura() { return largura; }
     public int getAltura() { return altura; }
-    public List<Alvo> getAlvosEsquerda() { return alvosEsquerda; }
-    public List<Alvo> getAlvosDireita() { return alvosDireita; }
     public List<Canhao> getCanhoesEsquerda() { return canhoesEsquerda; }
     public List<Canhao> getCanhoesDireita() { return canhoesDireita; }
     public List<Projetil> getProjeteis() { return projeteis; }
@@ -394,14 +391,8 @@ public class Jogo {
         return fatorFeedback;
     }
 
-    public float getTemperaturaAtual() {
-        return temperaturaAtual;
-    }
-
     public OptimizationTask getOptimizationEsquerda() { return optimizationEsquerda; }
     public OptimizationTask getOptimizationDireita() { return optimizationDireita; }
-    public int getAbatesEsquerda() { return abatesEsquerda; }
-    public int getAbatesDireita() { return abatesDireita; }
 
     /** Gera novos alvos periodicamente enquanto a partida estiver em andamento. */
     private void iniciarThreadSpawn() {
@@ -457,7 +448,6 @@ public class Jogo {
         });
     }
 
-    /** Finaliza a partida, calcula o vencedor e informa a interface. */
     /** Encerra a partida, interrompe entidades e informa o vencedor para a interface. */
     public void finalizarJogo() {
         if (!emAndamento) return;

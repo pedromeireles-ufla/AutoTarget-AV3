@@ -3,10 +3,8 @@ package com.autotarget.game.util;
 import com.autotarget.game.model.Partida;
 import com.autotarget.game.model.Telemetria;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QuerySnapshot;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -125,71 +123,5 @@ public class FirebaseRepository {
 
     public String getCurrentUserId() {
         return auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : null;
-    }
-
-    /** Resultado de uma página do histórico, incluindo o cursor para buscar a próxima página. */
-    public static class PaginaResultado {
-        public final List<Partida> partidas;
-        public final DocumentSnapshot ultimoDocumento;
-        public final boolean temMaisPaginas;
-
-        public PaginaResultado(List<Partida> partidas, DocumentSnapshot ultimoDocumento, boolean temMaisPaginas) {
-            this.partidas = partidas;
-            this.ultimoDocumento = ultimoDocumento;
-            this.temMaisPaginas = temMaisPaginas;
-        }
-    }
-
-    private static final int TAMANHO_PAGINA = 10;
-
-    /**
-     * Busca uma página do histórico completo de partidas (todos os jogadores, sem
-     * deduplicação), ordenado por abates decrescente. Usa paginação real baseada em
-     * cursor do Firestore (startAfter), em vez de carregar tudo de uma vez.
-     *
-     * Passe cursorAnterior = null para buscar a primeira página.
-     */
-    public synchronized void buscarHistoricoPaginado(DocumentSnapshot cursorAnterior,
-                                                       RepositoryCallback<PaginaResultado> callback) {
-        executor.execute(() -> {
-            Query query = db.collection("partidas")
-                    .orderBy("alvosAbatidos", Query.Direction.DESCENDING)
-                    .limit(TAMANHO_PAGINA);
-
-            if (cursorAnterior != null) {
-                query = query.startAfter(cursorAnterior);
-            }
-
-            query.get()
-                    .addOnSuccessListener((QuerySnapshot snapshot) -> {
-                        List<Partida> pagina = snapshot.toObjects(Partida.class);
-
-                        for (Partida p : pagina) {
-                            try {
-                                String jsonDescriptografado = Cryptography.decrypt(p.getDadosCriptografados());
-                                org.json.JSONObject obj = new org.json.JSONObject(jsonDescriptografado);
-                                p.setNomeJogador(obj.getString("nomeJogador"));
-                                p.setPontuacaoFinal(obj.getString("pontuacaoFinal"));
-                            } catch (Exception e) {
-                                p.setNomeJogador("Erro");
-                                p.setPontuacaoFinal("0");
-                            }
-                        }
-
-                        DocumentSnapshot novoCursor = snapshot.getDocuments().isEmpty()
-                                ? cursorAnterior
-                                : snapshot.getDocuments().get(snapshot.getDocuments().size() - 1);
-
-                        // Se a página voltou cheia (igual ao tamanho da página), provavelmente há mais dados.
-                        boolean temMais = pagina.size() == TAMANHO_PAGINA;
-
-                        if (callback != null) {
-                            callback.onSuccess(new PaginaResultado(pagina, novoCursor, temMais));
-                        }
-                    })
-                    .addOnFailureListener(e -> {
-                        if (callback != null) callback.onError(e);
-                    });
-        });
     }
 }

@@ -9,19 +9,25 @@ import java.util.Date;
  */
 public class Partida {
     private String userId;
-    private String nomeJogador; // Será criptografado
-    private String pontuacaoFinal; // Será criptografado
+
+    // Mantidos como texto puro apenas em memória, durante o cálculo do JSON criptografado.
+    // Antes de salvar no Firestore (ver FirebaseRepository.salvarPartida), ambos são
+    // setados como null, já que o valor real fica armazenado em dadosCriptografados.
+    private String nomeJogador;
+    private String pontuacaoFinal;
+
     private int alvosAbatidos;
     private int canhoesUtilizados;
-    private String dadosCriptografados; // JSON criptografado com nome e pontuação
-    
+
+    // JSON contendo nomeJogador e pontuacaoFinal, já criptografado com AES.
+    // É o único campo sensível de fato persistido no Firestore (Requisito 6.3.2 b).
+    private String dadosCriptografados;
+
     @ServerTimestamp
     private Date timestamp;
 
-    public String getDadosCriptografados() { return dadosCriptografados; }
-    public void setDadosCriptografados(String dadosCriptografados) { this.dadosCriptografados = dadosCriptografados; }
+    /** Construtor vazio necessário para o Firestore reconstruir o objeto via reflection. */
     public Partida() {
-        // Construtor vazio necessário para o Firestore
     }
 
     public Partida(String userId, String nomeJogador, String pontuacaoFinal, int alvosAbatidos, int canhoesUtilizados) {
@@ -47,6 +53,9 @@ public class Partida {
 
     public int getCanhoesUtilizados() { return canhoesUtilizados; }
     public void setCanhoesUtilizados(int canhoesUtilizados) { this.canhoesUtilizados = canhoesUtilizados; }
+
+    public String getDadosCriptografados() { return dadosCriptografados; }
+    public void setDadosCriptografados(String dadosCriptografados) { this.dadosCriptografados = dadosCriptografados; }
 
     public Date getTimestamp() { return timestamp; }
     public void setTimestamp(Date timestamp) { this.timestamp = timestamp; }

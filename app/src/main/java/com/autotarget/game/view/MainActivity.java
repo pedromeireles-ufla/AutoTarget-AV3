@@ -26,8 +26,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Tela principal do AutoTarget AV2.
- * Inicializa a interface, controla o ciclo da partida e dispara a análise de escalonabilidade.
+ * Tela principal do AutoTarget AV3.
+ * Inicializa a interface, controla o ciclo da partida, dispara a análise de
+ * escalonabilidade (legado da AV2, mantido como parte do diagnóstico do projeto)
+ * e integra os requisitos da AV3: persistência no Firestore, criptografia,
+ * telemetria do sistema ciberfísico e controle de sessão.
  */
 public class MainActivity extends AppCompatActivity implements Jogo.JogoCallback {
     private static final String TAG = "MainActivity";
@@ -120,8 +123,6 @@ public class MainActivity extends AppCompatActivity implements Jogo.JogoCallback
             Log.e(SCHED_TAG, "Botão reiniciar clicado. Iniciando novo jogo.");
             iniciarNovoJogo();
         });
-
-        gameView.setOnTouchListener(null);
     }
 
     /** Reinicia a interface, cria um novo objeto Jogo e inicia renderização e simulação. */
@@ -390,6 +391,8 @@ public class MainActivity extends AppCompatActivity implements Jogo.JogoCallback
         startActivity(intent);
         finish();
     }
+
+    /** Abre um diálogo para o usuário alterar o nickname exibido no ranking. */
     private void mostrarDialogoTrocarNickname() {
         com.google.firebase.auth.FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) return;
