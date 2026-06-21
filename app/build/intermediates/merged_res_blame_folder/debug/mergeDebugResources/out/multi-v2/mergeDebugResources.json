@@ -8385,6 +8385,23 @@
                     }
                 },
                 {
+                    "source": "C:\\Users\\palva\\OneDrive\\Desktop\\Automacao Avancada\\Atual\\AutoTarget_AV3\\app\\src\\main\\res\\values\\strings.xml",
+                    "from": {
+                        "startLines": "1,3,2",
+                        "startColumns": "4,4,4",
+                        "startOffsets": "16,121,68",
+                        "endColumns": "51,65,52",
+                        "endOffsets": "63,182,116"
+                    },
+                    "to": {
+                        "startLines": "1984,1992,1993",
+                        "startColumns": "4,4,4",
+                        "startOffsets": "131519,132810,132876",
+                        "endColumns": "51,65,52",
+                        "endOffsets": "131566,132871,132924"
+                    }
+                },
+                {
                     "source": "C:\\Users\\palva\\.gradle\\caches\\transforms-4\\7f23d72a8ed161f7ebe7adf499531743\\transformed\\drawerlayout-1.1.1\\res\\values\\values.xml",
                     "from": {
                         "startLines": "2,3,4,5",
@@ -8423,23 +8440,6 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\palva\\OneDrive\\Desktop\\Automacao Avancada\\Atual\\AutoTarget_AV3_v05\\app\\src\\main\\res\\values\\colors.xml",
-                    "from": {
-                        "startLines": "2,4,5,6,3",
-                        "startColumns": "4,4,4,4,4",
-                        "startOffsets": "55,139,186,233,97",
-                        "endColumns": "41,46,46,44,41",
-                        "endOffsets": "92,181,228,273,134"
-                    },
-                    "to": {
-                        "startLines": "640,957,958,969,972",
-                        "startColumns": "4,4,4,4,4",
-                        "startOffsets": "32798,56445,56492,57236,57402",
-                        "endColumns": "41,46,46,44,41",
-                        "endOffsets": "32835,56487,56534,57276,57439"
-                    }
-                },
-                {
                     "source": "C:\\Users\\palva\\.gradle\\caches\\transforms-4\\00143cc32e57827029434b3bd9e92aaa\\transformed\\lifecycle-viewmodel-2.6.1\\res\\values\\values.xml",
                     "from": {
                         "startLines": "2",
@@ -8454,23 +8454,6 @@
                         "startOffsets": "124552",
                         "endColumns": "49",
                         "endOffsets": "124597"
-                    }
-                },
-                {
-                    "source": "C:\\Users\\palva\\OneDrive\\Desktop\\Automacao Avancada\\Atual\\AutoTarget_AV3_v05\\app\\build\\generated\\res\\processDebugGoogleServices\\values\\values.xml",
-                    "from": {
-                        "startLines": "2,3,4,5,6,7",
-                        "startColumns": "4,4,4,4,4,4",
-                        "startOffsets": "55,136,240,348,468,576",
-                        "endColumns": "80,103,107,119,107,76",
-                        "endOffsets": "131,235,343,463,571,648"
-                    },
-                    "to": {
-                        "startLines": "2027,2028,2029,2030,2031,2146",
-                        "startColumns": "4,4,4,4,4,4",
-                        "startOffsets": "136550,136631,136735,136843,136963,153752",
-                        "endColumns": "80,103,107,119,107,76",
-                        "endOffsets": "136626,136730,136838,136958,137066,153824"
                     }
                 },
                 {
@@ -8656,23 +8639,6 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\palva\\OneDrive\\Desktop\\Automacao Avancada\\Atual\\AutoTarget_AV3_v05\\app\\src\\main\\res\\values\\strings.xml",
-                    "from": {
-                        "startLines": "1,3,2",
-                        "startColumns": "4,4,4",
-                        "startOffsets": "16,121,68",
-                        "endColumns": "51,65,52",
-                        "endOffsets": "63,182,116"
-                    },
-                    "to": {
-                        "startLines": "1984,1992,1993",
-                        "startColumns": "4,4,4",
-                        "startOffsets": "131519,132810,132876",
-                        "endColumns": "51,65,52",
-                        "endOffsets": "131566,132871,132924"
-                    }
-                },
-                {
                     "source": "C:\\Users\\palva\\.gradle\\caches\\transforms-4\\c13c39a037f265ce5cb8792353f84489\\transformed\\transition-1.2.0\\res\\values\\values.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11",
@@ -8690,7 +8656,24 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\palva\\OneDrive\\Desktop\\Automacao Avancada\\Atual\\AutoTarget_AV3_v05\\app\\src\\main\\res\\values\\themes.xml",
+                    "source": "C:\\Users\\palva\\OneDrive\\Desktop\\Automacao Avancada\\Atual\\AutoTarget_AV3\\app\\src\\main\\res\\values\\colors.xml",
+                    "from": {
+                        "startLines": "2,4,5,6,3",
+                        "startColumns": "4,4,4,4,4",
+                        "startOffsets": "55,139,186,233,97",
+                        "endColumns": "41,46,46,44,41",
+                        "endOffsets": "92,181,228,273,134"
+                    },
+                    "to": {
+                        "startLines": "640,957,958,969,972",
+                        "startColumns": "4,4,4,4,4",
+                        "startOffsets": "32798,56445,56492,57236,57402",
+                        "endColumns": "41,46,46,44,41",
+                        "endOffsets": "32835,56487,56534,57276,57439"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\palva\\OneDrive\\Desktop\\Automacao Avancada\\Atual\\AutoTarget_AV3\\app\\src\\main\\res\\values\\themes.xml",
                     "from": {
                         "startLines": "1",
                         "startColumns": "4",
@@ -8723,6 +8706,23 @@
                         "startOffsets": "33366,33424,33490,33553,62958,63029,135639,136335,136402,136481",
                         "endColumns": "57,65,62,61,70,71,67,66,78,68",
                         "endOffsets": "33419,33485,33548,33610,63024,63096,135702,136397,136476,136545"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\palva\\OneDrive\\Desktop\\Automacao Avancada\\Atual\\AutoTarget_AV3\\app\\build\\generated\\res\\processDebugGoogleServices\\values\\values.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7",
+                        "startColumns": "4,4,4,4,4,4",
+                        "startOffsets": "55,136,240,348,468,576",
+                        "endColumns": "80,103,107,119,107,76",
+                        "endOffsets": "131,235,343,463,571,648"
+                    },
+                    "to": {
+                        "startLines": "2027,2028,2029,2030,2031,2146",
+                        "startColumns": "4,4,4,4,4,4",
+                        "startOffsets": "136550,136631,136735,136843,136963,153752",
+                        "endColumns": "80,103,107,119,107,76",
+                        "endOffsets": "136626,136730,136838,136958,137066,153824"
                     }
                 },
                 {
