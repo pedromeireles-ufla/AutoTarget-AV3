@@ -46,9 +46,9 @@ public final class TelemetriaChartWriter {
             Log.e(TAG, "Não foi possível criar diretório: " + dir.getAbsolutePath());
         }
 
-        long timestamp = System.currentTimeMillis();
-        File svg = new File(dir, "grafico_temperatura_" + timestamp + ".svg");
-        File report = new File(dir, "discussao_estabilidade_" + timestamp + ".txt");
+        File svg = new File(dir, "grafico_temperatura.svg");
+        File report = new File(dir, "discussao_estabilidade.txt");
+
 
         escreverSvg(svg, historico, limiar);
         String discussao = construirDiscussaoEstabilidade(historico, limiar);
