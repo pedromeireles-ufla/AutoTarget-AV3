@@ -21,7 +21,7 @@
         android:id="@+id/etNickname"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Nickname (apelido no ranking)"
+        android:hint="Nickname (apelido)"
         android:inputType="text"
         android:layout_marginBottom="16dp"
         android:visibility="gone"/>
