@@ -84,6 +84,7 @@ public class FirebaseRepository {
         executor.execute(() -> {
             db.collection("partidas")
                     .orderBy("alvosAbatidos", Query.Direction.DESCENDING)
+                    .orderBy("timestamp", Query.Direction.ASCENDING) // empate: mais antigo mantém a posição
                     .limit(100)
                     .get()
                     .addOnSuccessListener(queryDocumentSnapshots -> {
